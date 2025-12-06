@@ -6,8 +6,11 @@ Repositori ini berisi kode sumber untuk tugas pembuatan aplikasi Android sederha
 **Anggota Kelompok**
 
 Muhammad Dzaki Wirayuda (23523197)
+
 Ahmad Aiman Zumar Prawirosunoto (23523112)
+
 Raditya Pratama (23523169)
+
 Muhammad Ibnu Rasyid (23523127)
 
 **Fitur Utama**
