@@ -1,10 +1,12 @@
 plugins {
     id("com.android.application")
     id("org.jetbrains.kotlin.android")
+    // PLUGIN BARU: Wajib ada jika menggunakan Kotlin 2.0+ dengan Compose
+    id("org.jetbrains.kotlin.plugin.compose")
 }
 
 android {
-    namespace = "com.example.mvvmask" // Sesuaikan dengan package Anda
+    namespace = "com.example.mvvmask"
     compileSdk = 34
 
     defaultConfig {
@@ -37,11 +39,10 @@ android {
         jvmTarget = "1.8"
     }
     buildFeatures {
-        compose = true // Wajib True untuk Compose
+        compose = true
     }
-    composeOptions {
-        kotlinCompilerExtensionVersion = "1.5.1"
-    }
+    // CATATAN: Blok composeOptions { ... } dihapus karena Kotlin 2.0+ menanganinya otomatis
+
     packaging {
         resources {
             excludes += "/META-INF/{AL2.0,LGPL2.1}"
