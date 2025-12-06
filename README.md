@@ -47,6 +47,15 @@ Jalankan pada Emulator atau Device Android.
 
 **Screenshot**
 
-1. Tampilan Awal (Sebelum Proses)(Tempatkan screenshot tampilan awal di sini)
-2. Tampilan Setelah Data Muncul(Tempatkan screenshot data list di sini)
-3. Notifikasi Lokal(Tempatkan screenshot notifikasi di status bar di sini)
+1. Tampilan Awal (Sebelum Proses)
+
+<img width="181" height="396" alt="image" src="https://github.com/user-attachments/assets/5e0e22c7-0ea2-45b2-a518-13f240d208b3" />
+
+2. Tampilan Setelah Data Muncul
+
+<img width="181" height="393" alt="image" src="https://github.com/user-attachments/assets/00ebdff0-3bc1-4d30-855b-00ffd329f3a7" />
+
+3. Notifikasi Lokal
+  
+<img width="179" height="387" alt="image" src="https://github.com/user-attachments/assets/17f8184a-c25c-40a5-8130-c9cca32fd827" />
+
