@@ -1,0 +1,32 @@
+[
+  {
+    "id": 1,
+    "name": "Budi Santoso",
+    "role": "Mahasiswa",
+    "email": "budi@example.com"
+  },
+  {
+    "id": 2,
+    "name": "Siti Aminah",
+    "role": "Dosen Pembimbing",
+    "email": "siti@example.com"
+  },
+  {
+    "id": 3,
+    "name": "Andi Pratama",
+    "role": "Ketua Kelompok",
+    "email": "andi@example.com"
+  },
+  {
+    "id": 4,
+    "name": "Dewi Lestari",
+    "role": "Sekretaris",
+    "email": "dewi@example.com"
+  },
+  {
+    "id": 5,
+    "name": "Eko Kurniawan",
+    "role": "Programmer",
+    "email": "eko@example.com"
+  }
+]
