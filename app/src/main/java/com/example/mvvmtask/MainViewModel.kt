@@ -1,34 +1,44 @@
-package com.example.mvvmtask
+package com.example.mvvmask
 
 import android.app.Application
 import androidx.lifecycle.AndroidViewModel
-import androidx.lifecycle.LiveData
-import androidx.lifecycle.MutableLiveData
 import androidx.lifecycle.viewModelScope
+import kotlinx.coroutines.flow.MutableStateFlow
+import kotlinx.coroutines.flow.StateFlow
+import kotlinx.coroutines.flow.asStateFlow
 import kotlinx.coroutines.launch
 
-// Menggunakan AndroidViewModel agar bisa akses Application Context (untuk akses Assets)
+// State untuk UI (Loading atau Data Ready)
+data class UiState(
+    val isLoading: Boolean = false,
+    val users: List<User> = emptyList(),
+    val isFinished: Boolean = false // Trigger untuk notifikasi
+)
+
 class MainViewModel(application: Application) : AndroidViewModel(application) {
 
     private val repository = UserRepository(application)
 
-    // LiveData untuk menyimpan state data User
-    private val _users = MutableLiveData<List<User>>()
-    val users: LiveData<List<User>> = _users
+    // Menggunakan StateFlow yang lebih cocok untuk Compose
+    private val _uiState = MutableStateFlow(UiState())
+    val uiState: StateFlow<UiState> = _uiState.asStateFlow()
 
-    // LiveData untuk status Loading
-    private val _isLoading = MutableLiveData<Boolean>()
-    val isLoading: LiveData<Boolean> = _isLoading
-
-    // Fungsi untuk memicu pengambilan data
     fun loadUsers() {
-        _isLoading.value = true // Tampilkan loading
         viewModelScope.launch {
-            // Memanggil fungsi background di repository
+            _uiState.value = _uiState.value.copy(isLoading = true, isFinished = false)
+
             val result = repository.getUsersFromAssets()
 
-            _users.value = result // Update data ke UI
-            _isLoading.value = false // Sembunyikan loading
+            _uiState.value = _uiState.value.copy(
+                isLoading = false,
+                users = result,
+                isFinished = true
+            )
         }
+    }
+
+    // Reset status finished agar notifikasi tidak muncul berulang saat rotate layar
+    fun onNotificationShown() {
+        _uiState.value = _uiState.value.copy(isFinished = false)
     }
 }

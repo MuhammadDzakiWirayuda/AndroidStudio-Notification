@@ -1,4 +1,4 @@
-package com.example.mvvmtask
+package com.example.mvvmask
 
 import android.Manifest
 import android.app.NotificationChannel
@@ -7,116 +7,75 @@ import android.content.Context
 import android.content.pm.PackageManager
 import android.os.Build
 import android.os.Bundle
-import android.view.View
 import android.widget.Toast
+import androidx.activity.ComponentActivity
+import androidx.activity.compose.rememberLauncherForActivityResult
+import androidx.activity.compose.setContent
 import androidx.activity.result.contract.ActivityResultContracts
-import androidx.activity.viewModels
-import androidx.appcompat.app.AppCompatActivity
+import androidx.compose.foundation.background
+import androidx.compose.foundation.layout.*
+import androidx.compose.foundation.lazy.LazyColumn
+import androidx.compose.foundation.lazy.items
+import androidx.compose.material3.*
+import androidx.compose.runtime.*
+import androidx.compose.ui.Alignment
+import androidx.compose.ui.Modifier
+import androidx.compose.ui.graphics.Color
+import androidx.compose.ui.platform.LocalContext
+import androidx.compose.ui.text.font.FontWeight
+import androidx.compose.ui.unit.dp
+import androidx.compose.ui.unit.sp
 import androidx.core.app.ActivityCompat
 import androidx.core.app.NotificationCompat
 import androidx.core.app.NotificationManagerCompat
-import com.example.mvvmtask.databinding.ActivityMainBinding
+import androidx.lifecycle.viewmodel.compose.viewModel
+import com.example.mvvmask.ui.theme.MvvmaskTheme // Pastikan import Theme ini sesuai folder Anda
 
-class MainActivity : AppCompatActivity() {
+class MainActivity : ComponentActivity() {
 
-    private lateinit var binding: ActivityMainBinding
-
-    // Inisialisasi ViewModel
-    private val viewModel: MainViewModel by viewModels()
-
-    // Konstanta untuk Notifikasi
     private val CHANNEL_ID = "channel_download_complete"
     private val NOTIFICATION_ID = 1
 
     override fun onCreate(savedInstanceState: Bundle?) {
         super.onCreate(savedInstanceState)
-        binding = ActivityMainBinding.inflate(layoutInflater)
-        setContentView(binding.root)
+        createNotificationChannel()
 
-        createNotificationChannel() // Buat channel notifikasi (wajib untuk Android O+)
-
-        // Setup Listener Tombol
-        binding.btnLoadData.setOnClickListener {
-            // Cek izin notifikasi untuk Android 13+
-            checkPermissionAndLoadData()
-        }
-
-        // Observer: Memantau perubahan data Users
-        viewModel.users.observe(this) { userList ->
-            if (userList.isNotEmpty()) {
-                val formattedText = StringBuilder()
-                userList.forEach { user ->
-                    formattedText.append(user.toString())
+        setContent {
+            // Gunakan Theme bawaan project Anda
+            MvvmaskTheme {
+                Surface(
+                    modifier = Modifier.fillMaxSize(),
+                    color = MaterialTheme.colorScheme.background
+                ) {
+                    MainScreen(
+                        onShowNotification = { showNotification(this) }
+                    )
                 }
-                binding.tvResult.text = formattedText.toString()
-
-                // Tampilkan notifikasi saat data selesai dimuat
-                showNotification()
-            }
-        }
-
-        // Observer: Memantau status Loading
-        viewModel.isLoading.observe(this) { isLoading ->
-            if (isLoading) {
-                binding.progressBar.visibility = View.VISIBLE
-                binding.btnLoadData.isEnabled = false
-                binding.tvResult.text = "Sedang memproses data..."
-            } else {
-                binding.progressBar.visibility = View.GONE
-                binding.btnLoadData.isEnabled = true
             }
         }
     }
 
-    private fun checkPermissionAndLoadData() {
-        if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.TIRAMISU) {
-            if (ActivityCompat.checkSelfPermission(
-                    this,
-                    Manifest.permission.POST_NOTIFICATIONS
-                ) != PackageManager.PERMISSION_GRANTED
-            ) {
-                requestPermissionLauncher.launch(Manifest.permission.POST_NOTIFICATIONS)
-            } else {
-                viewModel.loadUsers()
-            }
-        } else {
-            viewModel.loadUsers()
-        }
-    }
-
-    // Launcher untuk meminta izin runtime (Android 13+)
-    private val requestPermissionLauncher = registerForActivityResult(
-        ActivityResultContracts.RequestPermission()
-    ) { isGranted: Boolean ->
-        if (isGranted) {
-            viewModel.loadUsers()
-        } else {
-            Toast.makeText(this, "Izin notifikasi ditolak", Toast.LENGTH_SHORT).show()
-            viewModel.loadUsers() // Tetap load data meski tanpa notifikasi
-        }
-    }
-
-    private fun showNotification() {
-        val builder = NotificationCompat.Builder(this, CHANNEL_ID)
-            .setSmallIcon(android.R.drawable.stat_sys_download_done) // Icon bawaan android
-            .setContentTitle("Proses Selesai!")
-            .setContentText("Data berhasil dimuat dari penyimpanan lokal.")
-            .setPriority(NotificationCompat.PRIORITY_DEFAULT)
-            .setAutoCancel(true)
-
+    private fun showNotification(context: Context) {
         if (ActivityCompat.checkSelfPermission(
-                this,
+                context,
                 Manifest.permission.POST_NOTIFICATIONS
             ) == PackageManager.PERMISSION_GRANTED
         ) {
-            NotificationManagerCompat.from(this).notify(NOTIFICATION_ID, builder.build())
+            val builder = NotificationCompat.Builder(context, CHANNEL_ID)
+                .setSmallIcon(android.R.drawable.stat_sys_download_done)
+                .setContentTitle("Proses Selesai!")
+                .setContentText("Data berhasil dimuat (Compose).")
+                .setPriority(NotificationCompat.PRIORITY_DEFAULT)
+                .setAutoCancel(true)
+
+            NotificationManagerCompat.from(context).notify(NOTIFICATION_ID, builder.build())
         }
     }
 
     private fun createNotificationChannel() {
         if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.O) {
             val name = "Download Channel"
-            val descriptionText = "Notifikasi saat download selesai"
+            val descriptionText = "Notifikasi selesai download"
             val importance = NotificationManager.IMPORTANCE_DEFAULT
             val channel = NotificationChannel(CHANNEL_ID, name, importance).apply {
                 description = descriptionText
@@ -124,6 +83,95 @@ class MainActivity : AppCompatActivity() {
             val notificationManager: NotificationManager =
                 getSystemService(Context.NOTIFICATION_SERVICE) as NotificationManager
             notificationManager.createNotificationChannel(channel)
+        }
+    }
+}
+
+@Composable
+fun MainScreen(
+    viewModel: MainViewModel = viewModel(),
+    onShowNotification: () -> Unit
+) {
+    // Mengambil state dari ViewModel
+    val state by viewModel.uiState.collectAsState()
+    val context = LocalContext.current
+
+    // Launcher untuk meminta izin notifikasi (Android 13+)
+    val permissionLauncher = rememberLauncherForActivityResult(
+        contract = ActivityResultContracts.RequestPermission(),
+        onResult = { isGranted ->
+            if (isGranted) {
+                viewModel.loadUsers()
+            } else {
+                Toast.makeText(context, "Izin ditolak, tetap memuat data", Toast.LENGTH_SHORT).show()
+                viewModel.loadUsers()
+            }
+        }
+    )
+
+    // Side Effect: Memantau jika proses selesai, lalu panggil notifikasi
+    LaunchedEffect(state.isFinished) {
+        if (state.isFinished) {
+            onShowNotification()
+            viewModel.onNotificationShown() // Reset agar tidak muncul terus
+        }
+    }
+
+    Column(
+        modifier = Modifier
+            .fillMaxSize()
+            .padding(16.dp),
+        horizontalAlignment = Alignment.CenterHorizontally
+    ) {
+        Text(
+            text = "MVVM Jetpack Compose",
+            fontSize = 24.sp,
+            fontWeight = FontWeight.Bold,
+            modifier = Modifier.padding(bottom = 24.dp)
+        )
+
+        Button(
+            onClick = {
+                // Cek Izin sebelum load data
+                if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.TIRAMISU) {
+                    permissionLauncher.launch(Manifest.permission.POST_NOTIFICATIONS)
+                } else {
+                    viewModel.loadUsers()
+                }
+            },
+            enabled = !state.isLoading
+        ) {
+            Text(text = if (state.isLoading) "Sedang Memproses..." else "Proses Data (Background)")
+        }
+
+        Spacer(modifier = Modifier.height(24.dp))
+
+        if (state.isLoading) {
+            CircularProgressIndicator()
+        } else {
+            // Menampilkan List Data
+            LazyColumn(
+                modifier = Modifier.fillMaxWidth(),
+                verticalArrangement = Arrangement.spacedBy(8.dp)
+            ) {
+                items(state.users) { user ->
+                    UserCard(user)
+                }
+            }
+        }
+    }
+}
+
+@Composable
+fun UserCard(user: User) {
+    Card(
+        modifier = Modifier.fillMaxWidth(),
+        elevation = CardDefaults.cardElevation(defaultElevation = 4.dp)
+    ) {
+        Column(modifier = Modifier.padding(16.dp)) {
+            Text(text = user.name, fontWeight = FontWeight.Bold, fontSize = 18.sp)
+            Text(text = "Role: ${user.role}", fontSize = 14.sp, color = Color.Gray)
+            Text(text = "Email: ${user.email}", fontSize = 14.sp)
         }
     }
 }
